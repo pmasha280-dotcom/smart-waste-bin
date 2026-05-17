@@ -1,0 +1,26 @@
+﻿# Dependencies
+node_modules/
+**/node_modules/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+**/venv/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Docker volumes
+postgres_data/
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
