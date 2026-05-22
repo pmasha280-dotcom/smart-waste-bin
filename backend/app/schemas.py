@@ -147,3 +147,24 @@ class InviteKeyResponse(BaseModel):
     
     class Config:
         from_attributes = True
+class CompartmentCreate(BaseModel):
+    waste_type: WasteType
+    max_capacity: int = 100
+
+class CompartmentResponse(BaseModel):
+    id: int
+    waste_type: WasteType
+    fill_level: int
+    max_capacity: int
+    last_updated: datetime
+    
+    class Config:
+        from_attributes = True
+
+class BinCreate(BaseModel):
+    name: str
+    identifier: str
+    floor_id: int
+    position_x: float
+    position_y: float
+    compartments: List[CompartmentCreate] = []

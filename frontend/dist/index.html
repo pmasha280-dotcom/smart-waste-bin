@@ -1,0 +1,26 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Bin Test</title>
+</head>
+<body>
+    <h1>Smart Waste Bin System - TEST</h1>
+    <p>If you see this, server is working correctly.</p>
+    <button onclick="test()">Test API</button>
+    <div id="result"></div>
+    <script>
+        function test() {
+            fetch('/api/floors')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                })
+                .catch(e => {
+                    document.getElementById('result').innerHTML = 'Error: ' + e.message;
+                });
+        }
+        
+        test();
+    </script>
+</body>
+</html>

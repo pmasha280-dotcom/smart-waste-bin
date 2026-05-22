@@ -1,11 +1,11 @@
-<template>
+﻿<template>
   <div id="app">
-    <DashboardView />
+    <router-view />
   </div>
 </template>
 
 <script setup>
-import DashboardView from './views/DashboardView.vue'
+// Компонент будет отображаться в зависимости от маршрута
 </script>
 
 <style>

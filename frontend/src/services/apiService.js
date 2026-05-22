@@ -3,39 +3,12 @@
 const API_BASE_URL = '/api'
 
 const apiService = {
-  async post(url, data) {
-    try {
-      const response = await axios.post(`${API_BASE_URL}${url}`, data)
-      return response
-    } catch (error) {
-      throw error
-    }
-  },
-
-  async get(url) {
-    try {
-      const response = await axios.get(`${API_BASE_URL}${url}`)
-      return response
-    } catch (error) {
-      throw error
-    }
-  },
-
-  async put(url, data) {
-    try {
-      const response = await axios.put(`${API_BASE_URL}${url}`, data)
-      return response
-    } catch (error) {
-      throw error
-    }
-  },
-
-  async delete(url) {
-    try {
-      const response = await axios.delete(`${API_BASE_URL}${url}`)
-      return response
-    } catch (error) {
-      throw error
+  // Установка заголовка авторизации
+  setAuthHeader(token) {
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    } else {
+      delete axios.defaults.headers.common['Authorization']
     }
   },
 
@@ -73,23 +46,49 @@ const apiService = {
     }
   },
 
+  async register(username, email, password, inviteKey) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, {
+        username,
+        email,
+        password,
+        invite_key: inviteKey
+      })
+      if (response.data.access_token) {
+        localStorage.setItem('token', response.data.access_token)
+        localStorage.setItem('user', JSON.stringify(response.data.user))
+        this.setAuthHeader(response.data.access_token)
+      }
+      return response.data
+    } catch (error) {
+      console.error('Ошибка регистрации:', error)
+      throw error
+    }
+  },
+
   logout() {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     delete axios.defaults.headers.common['Authorization']
   },
 
-  setAuthHeader(token) {
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-  },
-
-  // Получить все этажи
+  // Методы для DashboardView
   async getFloors() {
     try {
       const response = await axios.get(`${API_BASE_URL}/floors`)
       return response.data
     } catch (error) {
       console.error('Ошибка получения этажей:', error)
+      throw error
+    }
+  },
+
+  async getBins() {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/bins`)
+      return response.data
+    } catch (error) {
+      console.error('Ошибка получения урн:', error)
       throw error
     }
   },
@@ -218,6 +217,7 @@ const apiService = {
   }
 }
 
+// Инициализация
 const token = localStorage.getItem('token')
 if (token) {
   apiService.setAuthHeader(token)

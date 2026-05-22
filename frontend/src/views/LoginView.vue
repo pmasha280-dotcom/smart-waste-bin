@@ -1,76 +1,82 @@
-<template>
-  <div class="login-card">
-    <div class="tabs">
-      <button 
-        v-for="role in roles" 
-        :key="role"
-        class="tab-btn" 
-        :class="{ active: currentRole === role }"
-        @click="currentRole = role"
-      >
-        {{ getRoleName(role) }}
+﻿<template>
+  <div class="login-container">
+    <!-- Кнопка гостевого входа вверху -->
+    <div class="guest-banner">
+      <button class="guest-btn" @click="guestLogin">
+        🎭 Войти как гость (без регистрации)
       </button>
     </div>
 
-    <!-- Гость -->
-    <div v-if="currentRole === 'guest'" class="tab-content active-content">
-      <div class="guest-welcome">
-        <div class="guest-icon-symbol">♻️</div>
-        <h2>Демо-доступ</h2>
-        <p>Просмотр карты и состояния урн без регистрации</p>
+    <div class="login-card">
+      <div class="tabs">
+        <button 
+          :class="{ active: mode === 'login' }"
+          @click="mode = 'login'"
+        >
+          Вход
+        </button>
+        <button 
+          :class="{ active: mode === 'register' }"
+          @click="mode = 'register'"
+        >
+          Регистрация
+        </button>
       </div>
-      <button class="action-btn" @click="guestLogin">Войти как гость</button>
-      <div class="demo-note">
-        <span class="role-badge">без пароля</span>
-        <p>Вы сможете изучить карту этажей, цветовые индикаторы и детальную информацию об урнах.</p>
-      </div>
-    </div>
 
-    <!-- Работник -->
-    <div v-if="currentRole === 'worker'" class="tab-content active-content">
-      <h3>Доступ сотрудника</h3>
-      <div class="input-group">
-        <label>Email</label>
-        <input type="email" v-model="worker.email" placeholder="worker@smartbin.ru">
+      <!-- ФОРМА ВХОДА -->
+      <div v-if="mode === 'login'" class="form-container">
+        <h2>Вход в систему</h2>
+        <div class="input-group">
+          <label>Имя пользователя</label>
+          <input type="text" v-model="loginForm.username" placeholder="admin">
+        </div>
+        <div class="input-group">
+          <label>Пароль</label>
+          <input type="password" v-model="loginForm.password" placeholder="••••••••">
+        </div>
+        <button class="action-btn" @click="handleLogin" :disabled="loading">
+          {{ loading ? 'Вход...' : 'Войти' }}
+        </button>
+        <p v-if="loginError" class="error">{{ loginError }}</p>
       </div>
-      <div class="input-group">
-        <label>Пароль</label>
-        <input type="password" v-model="worker.password" placeholder="••••••••">
-      </div>
-      <div class="input-group">
-        <label>Регистрационный ключ (для новых сотрудников)</label>
-        <input type="text" v-model="worker.inviteKey" placeholder="Введите ключ сотрудника">
-        <div class="reg-hint">Если вы уже зарегистрированы, ключ необязателен. При регистрации нужен ключ доступа.</div>
-      </div>
-      <button class="action-btn" @click="loginOrRegister('worker')" :disabled="loading">
-        {{ loading ? 'Загрузка...' : 'Войти / Зарегистрироваться' }}
-      </button>
-      <div class="demo-note">
-        Работник видит карту, список урн для уборки и может отмечать очистку.
-      </div>
-    </div>
 
-    <!-- Администратор -->
-    <div v-if="currentRole === 'admin'" class="tab-content active-content">
-      <h3>Панель администратора</h3>
-      <div class="input-group">
-        <label>Email</label>
-        <input type="email" v-model="admin.email" placeholder="admin@smartbin.ru">
-      </div>
-      <div class="input-group">
-        <label>Пароль</label>
-        <input type="password" v-model="admin.password" placeholder="••••••••">
-      </div>
-      <div class="input-group">
-        <label>Административный ключ регистрации</label>
-        <input type="text" v-model="admin.inviteKey" placeholder="Ключ для создания учетной записи админа">
-        <div class="reg-hint">Требуется для регистрации новой роли администратора.</div>
-      </div>
-      <button class="action-btn" @click="loginOrRegister('admin')" :disabled="loading">
-        {{ loading ? 'Загрузка...' : 'Войти как администратор' }}
-      </button>
-      <div class="demo-note">
-        Полный доступ: управление урнами, пользователями, статистика и аналитика.
+      <!-- ФОРМА РЕГИСТРАЦИИ -->
+      <div v-if="mode === 'register'" class="form-container">
+        <div class="role-tabs">
+          <button 
+            v-for="role in roles" 
+            :key="role"
+            class="role-btn" 
+            :class="{ active: selectedRole === role }"
+            @click="selectedRole = role"
+          >
+            {{ getRoleName(role) }}
+          </button>
+        </div>
+
+        <h3>Регистрация {{ getRoleName(selectedRole).toLowerCase() }}</h3>
+        
+        <div class="input-group">
+          <label>Имя пользователя</label>
+          <input type="text" v-model="registerForm.username" placeholder="username">
+        </div>
+        <div class="input-group">
+          <label>Email</label>
+          <input type="email" v-model="registerForm.email" placeholder="user@example.com">
+        </div>
+        <div class="input-group">
+          <label>Пароль</label>
+          <input type="password" v-model="registerForm.password" placeholder="••••••••">
+        </div>
+        <div class="input-group">
+          <label>Инвайт-ключ</label>
+          <input type="text" v-model="registerForm.inviteKey" placeholder="Введите ключ доступа">
+          <div class="reg-hint">Получите ключ у администратора</div>
+        </div>
+        <button class="action-btn" @click="handleRegister" :disabled="loading">
+          {{ loading ? 'Регистрация...' : 'Зарегистрироваться' }}
+        </button>
+        <p v-if="registerError" class="error">{{ registerError }}</p>
       </div>
     </div>
   </div>
@@ -84,18 +90,21 @@ import { useAuthStore } from '../stores/authStore'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const currentRole = ref('guest')
+const mode = ref('login')
 const loading = ref(false)
+const loginError = ref('')
+const registerError = ref('')
+const selectedRole = ref('worker')
 
-const roles = ['guest', 'worker', 'admin']
+const roles = ['worker', 'admin']
 
-const worker = ref({
-  email: '',
-  password: '',
-  inviteKey: ''
+const loginForm = ref({
+  username: '',
+  password: ''
 })
 
-const admin = ref({
+const registerForm = ref({
+  username: '',
   email: '',
   password: '',
   inviteKey: ''
@@ -103,58 +112,94 @@ const admin = ref({
 
 const getRoleName = (role) => {
   const names = {
-    guest: 'Гость',
     worker: 'Работник',
     admin: 'Администратор'
   }
-  return names[role]
+  return names[role] || role
 }
 
+// Гостевой вход (без регистрации, только просмотр)
 const guestLogin = () => {
   authStore.setGuestMode()
   router.push('/dashboard')
 }
 
-const loginOrRegister = async (role) => {
+// Вход в систему
+const handleLogin = async () => {
   loading.value = true
-  
-  const data = role === 'worker' ? worker.value : admin.value
+  loginError.value = ''
   
   try {
-    // Сначала пробуем войти
-    let response = await authStore.login(data.email, data.password)
-    
-    if (!response.success && data.inviteKey) {
-      // Если вход не удался и есть ключ - регистрируемся
-      response = await authStore.register({
-        username: data.email.split('@')[0],
-        email: data.email,
-        password: data.password,
-        invite_key: data.inviteKey
-      })
-    }
-    
+    const response = await authStore.login(loginForm.value.username, loginForm.value.password)
     if (response.success) {
-      // Перенаправляем на дашборд
       router.push('/dashboard')
     } else {
-      showNotification(response.message || 'Ошибка входа', true)
+      loginError.value = response.message || 'Неверное имя пользователя или пароль'
     }
-  } catch (error) {
-    showNotification('Ошибка соединения с сервером', true)
+  } catch (err) {
+    loginError.value = 'Ошибка соединения с сервером'
   } finally {
     loading.value = false
   }
 }
 
-function showNotification(message, isError = false) {
-  // Ваша реализация уведомлений
-  alert(message) // Временно, потом замените на красивый тост
+// Регистрация
+const handleRegister = async () => {
+  loading.value = true
+  registerError.value = ''
+  
+  try {
+    const response = await authStore.register({
+      username: registerForm.value.username,
+      email: registerForm.value.email,
+      password: registerForm.value.password,
+      invite_key: registerForm.value.inviteKey
+    })
+    
+    if (response.success) {
+      router.push('/dashboard')
+    } else {
+      registerError.value = response.message || 'Ошибка регистрации. Неверный инвайт-ключ.'
+    }
+  } catch (err) {
+    registerError.value = 'Ошибка соединения с сервером'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
 <style scoped>
-/* Ваш CSS из HTML файла, адаптированный под Vue */
+.login-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+}
+
+.guest-banner {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.guest-btn {
+  background: linear-gradient(135deg, #38EB2E, #28B520);
+  border: none;
+  border-radius: 50px;
+  padding: 14px 28px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #00450B;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.guest-btn:hover {
+  transform: scale(1.02);
+}
+
 .login-card {
   background-color: #B2E9D8;
   border-radius: 48px;
@@ -174,7 +219,7 @@ function showNotification(message, isError = false) {
   margin-bottom: 32px;
 }
 
-.tab-btn {
+.tabs button {
   flex: 1;
   background: transparent;
   border: none;
@@ -186,9 +231,37 @@ function showNotification(message, isError = false) {
   color: #00450B;
 }
 
-.tab-btn.active {
+.tabs button.active {
   background-color: #38EB2E;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.role-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.role-btn {
+  flex: 1;
+  background: #EAE6C7;
+  border: 1px solid #1A3A1A;
+  padding: 8px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #00450B;
+}
+
+.role-btn.active {
+  background-color: #38EB2E;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.form-container h2, .form-container h3 {
+  text-align: center;
+  color: #00450B;
+  margin-bottom: 24px;
 }
 
 .input-group {
@@ -245,30 +318,10 @@ input:focus {
   margin-top: -6px;
 }
 
-.demo-note {
+.error {
+  color: red;
   text-align: center;
-  margin-top: 28px;
-  font-size: 0.8rem;
-  color: #00450B;
-  border-top: 1px solid rgba(30, 58, 30, 0.4);
-  padding-top: 20px;
-}
-
-.role-badge {
-  background: rgba(0, 69, 11, 0.15);
-  display: inline-block;
-  border-radius: 20px;
-  padding: 4px 14px;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-.guest-welcome {
-  text-align: center;
-}
-
-.guest-icon-symbol {
-  font-size: 3rem;
-  margin-bottom: 12px;
+  margin-top: 16px;
+  font-size: 0.85rem;
 }
 </style>
